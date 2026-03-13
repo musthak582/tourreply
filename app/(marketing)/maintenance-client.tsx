@@ -272,7 +272,7 @@ export function MaintenanceClient() {
           >
             support@tourreply.com
           </a>
-          {" "}· Powered by{" "}
+          · Powered by
           <span className="font-medium text-slate-500">TourReply</span>
         </p>
 
