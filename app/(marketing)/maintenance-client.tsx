@@ -266,13 +266,14 @@ export function MaintenanceClient() {
         {/* Footer */}
         <p className="mt-8 text-xs text-slate-400 text-center">
           Questions?{" "}
+          <a
           
             href="mailto:support@tourreply.com"
             className="text-emerald-600 hover:underline"
           >
             support@tourreply.com
           </a>
-          · Powered by
+          {" "}· Powered by{" "}
           <span className="font-medium text-slate-500">TourReply</span>
         </p>
 
