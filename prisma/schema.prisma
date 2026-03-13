@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotels Hotel[]
+}
+
+model Hotel {
+  id        String   @id @default(cuid())
+  name      String
+  location  String
+  phone     String?
+  email     String?
+  website   String?
+  currency  String   @default("USD")
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  guests        Guest[]
+  conversations Conversation[]
+  rooms         Room[]
+  faqs          FAQ[]
+}
+
+model Guest {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  country   String?
+  email     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+  bookings      Booking[]
+}
+
+model Conversation {
+  id          String   @id @default(cuid())
+  lastMessage String?
+  status      String   @default("open") // open, resolved, archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  guestId String
+  guest   Guest  @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sender    String // "guest" | "hotel" | "system"
+  content   String
+  type      String   @default("text") // text, system, payment_link
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   @default("standard") // standard, deluxe, suite, villa
+  price       Float
+  capacity    Int
+  description String?
+  amenities   String[] @default([])
+  images      String[] @default([])
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  checkIn        DateTime
+  checkOut       DateTime
+  guests         Int
+  status         String   @default("inquiry") // inquiry, interested, requested, confirmed, cancelled
+  paymentStatus  String   @default("pending") // pending, partial, paid, refunded
+  specialRequest String?
+  totalAmount    Float?
+  depositAmount  Float?
+  source         String   @default("whatsapp") // whatsapp, direct, booking_com, airbnb
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  guestId String
+  guest   Guest  @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  payments Payment[]
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  keywords  String[] @default([])
+  isActive  Boolean  @default(true)
+  hits      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  amount        Float
+  currency      String   @default("USD")
+  status        String   @default("pending") // pending, completed, failed, refunded
+  method        String?  // stripe, bank_transfer, cash
+  reference     String?
+  paymentLink   String?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // new_inquiry, booking_requested, payment_received, booking_confirmed
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
